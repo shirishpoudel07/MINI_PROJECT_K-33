@@ -1,0 +1,147 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Patient {
+  id                String         @id
+  name              String
+  condition         String
+  assignedDoctor    String?
+  medicalReport     String?
+  adherenceScore    Int            @default(0)
+  consistencyStreak Int            @default(0)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  activeVideos      Assignment[]
+  messages          Message[]
+  progressData      Progress[]
+  notifications     Notification[]
+  exerciseLogs      ExerciseLog[]
+}
+
+model ExerciseVideo {
+  id          String        @id
+  title       String
+  duration    String
+  thumbnail   String
+  videoUrl    String
+  category    String?
+  description String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  assignments Assignment[]
+}
+
+model Assignment {
+  id                String         @id
+  patientId         String
+  videoId           String?
+  title             String
+  duration          String?
+  thumbnail         String?
+  videoUrl          String
+  sets              Int            @default(3)
+  reps              Int            @default(10)
+  notes             String?
+  dateAssigned      String
+  status            String         @default("active")
+  lastCompletedDate String?
+  completionCount   Int            @default(0)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  patient           Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  video             ExerciseVideo? @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  logs              ExerciseLog[]
+}
+
+model ExerciseLog {
+  id           String      @id
+  patientId    String
+  assignmentId String
+  title        String
+  painLevel    Int         @default(0)
+  sets         Int         @default(3)
+  reps         Int         @default(10)
+  notes        String?
+  completedAt  DateTime    @default(now())
+
+  patient      Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  assignment   Assignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id           String   @id
+  patientId    String
+  sender       String   @default("doctor")
+  sender_id    String?
+  receiver_id  String?
+  text         String   @default("")
+  message_text String?
+  videoUrl     String?
+  thumbnail    String?
+  title        String?
+  timestamp    String
+  createdAt    DateTime @default(now())
+
+  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model Progress {
+  id        Int      @id @default(autoincrement())
+  patientId String
+  day       String
+  score     Int
+  sortOrder Int      @default(0)
+
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id               String   @id
+  patientId        String?
+  patientName      String?
+  patientCondition String?
+  title            String
+  message          String
+  time             String
+  type             String
+  isUnread         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  patient          Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+}
+
+model ScheduleItem {
+  id        Int      @id @default(autoincrement())
+  patientId String?
+  name      String
+  type      String
+  time      String
+  status    String   @default("upcoming")
+  createdAt DateTime @default(now())
+}
+
+model DoctorProfile {
+  id           String   @id @default("doc-1")
+  name         String   @default("Dr. Alex Mercer, PT, DPT")
+  title        String   @default("Chief Physical Therapist & Clinic Director")
+  avatar       String   @default("https://images.unsplash.com/photo-1622253692010-333f2da6031d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80")
+  clinic       String   @default("VirtuHeal Orthopedic & Sports Rehabilitation")
+  email        String   @default("alex.mercer@virtuheal.clinic")
+  phone        String   @default("+1 (555) 349-8821")
+  license      String   @default("PT-CA-889421")
+  specialties  String   @default("Post-Surgical ACL, Total Joint Arthroplasty, Rotator Cuff Rehabilitation, Spinal Mechanics")
+  workingHours String   @default("Monday - Friday: 08:00 AM - 05:30 PM")
+  bio          String   @default("Board-certified clinical specialist with over 12 years of sports orthopedic and complex post-operative physical rehabilitation experience.")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+

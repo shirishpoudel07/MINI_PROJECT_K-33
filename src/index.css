@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Arctic Frost - Aura */
+/* Base color on BODY - blend modes composite against this */
+body {
+  background-color: #faf8f2;
+  color: #0f172a;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Aura Background Container */
+.aura-bg {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh; /* height must be explicit - absolute layers add none */
+  /* NO background-color - layers blend against body */
+}
+
+/* Fixed Aura Background Backdrop (does not occupy flex layout space) */
+.aura-fixed-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Layer 1 - multiply */
+.aura-layer-1 {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(186, 230, 253, 0.42) 0%,
+    rgba(200, 230, 255, 0.30) 22%,
+    rgba(255, 255, 255, 0.25) 38%,
+    rgb(150, 200, 255) 68%,
+    rgb(100, 130, 200) 100%
+  );
+  mix-blend-mode: multiply;
+  filter: blur(80px); /* 115px on desktop */
+  transform: translateZ(0);
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* Layer 2 - multiply */
+.aura-layer-2 {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    165deg,
+    rgba(190, 235, 255, 0.45) 0%,
+    rgba(200, 230, 255, 0.35) 28%,
+    rgba(255, 255, 255, 0.50) 56%,
+    rgb(150, 200, 255) 82%,
+    rgb(100, 130, 200) 100%
+  );
+  mix-blend-mode: multiply;
+  filter: blur(80px); /* 115px on desktop */
+  transform: translateZ(0);
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* Desktop Blur Enhancements (>= 768px) */
+@media (min-width: 768px) {
+  .aura-layer-1,
+  .aura-layer-2 {
+    filter: blur(115px);
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/50 shadow-sm;
+  }
+  .glass-frosted {
+    background-color: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(14, 165, 233, 0.16);
+    box-shadow: 0 4px 20px -2px rgba(12, 74, 110, 0.05);
+  }
+  .glass-card {
+    background-color: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(224, 242, 254, 0.8);
+    box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.06), 0 8px 10px -6px rgba(14, 165, 233, 0.04);
+  }
+  .glass-panel {
+    background-color: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(14, 165, 233, 0.18);
+    box-shadow: 0 20px 25px -5px rgba(12, 74, 110, 0.04), 0 8px 10px -6px rgba(12, 74, 110, 0.04);
+  }
+  .glass-dark {
+    @apply bg-slate-900/80 backdrop-blur-md border border-slate-700/50;
+  }
+}
+
+/* Custom scrollbar for message history & panels */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(14, 165, 233, 0.28);
+  border-radius: 20px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(14, 165, 233, 0.48);
+}
