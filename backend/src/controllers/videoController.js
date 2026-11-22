@@ -11,7 +11,8 @@ export const getVideos = async (req, res) => {
 
     if (search) {
       where.title = {
-        contains: search
+        contains: search,
+        mode: 'insensitive'
       };
     }
 
