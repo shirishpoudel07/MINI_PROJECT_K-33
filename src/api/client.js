@@ -1,11 +1,21 @@
 import { io } from 'socket.io-client';
 
-const API_BASE = '/api';
+// Retrieve backend URL from Vite environment variable (e.g., https://mini-project-k-33.onrender.com)
+// If VITE_API_URL is unset (e.g. local development), fallback cleanly to relative paths and Vite proxy
+const rawApiUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
+
+// Socket.io connects to the backend host root (without trailing /api)
+export const SOCKET_URL = rawApiUrl ? rawApiUrl.replace(/\/api$/, '') : '/';
+
+// REST API base URL (ensures consistent /api prefix)
+export const API_BASE = rawApiUrl
+  ? (rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`)
+  : '/api';
 
 let socket = null;
 export function getSocket() {
   if (!socket && typeof window !== 'undefined') {
-    socket = io('/', {
+    socket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       autoConnect: true
     });
