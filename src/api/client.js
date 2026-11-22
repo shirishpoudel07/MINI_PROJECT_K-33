@@ -1,14 +1,11 @@
 import { io } from 'socket.io-client';
 
-// Support external backend URL for production / GitHub Pages deployment
-const RAW_BACKEND_URL = (import.meta.env.VITE_API_URL || '').trim();
-const BACKEND_URL = RAW_BACKEND_URL.replace(/\/$/, '');
-const API_BASE = BACKEND_URL ? `${BACKEND_URL}/api` : '/api';
+const API_BASE = '/api';
 
 let socket = null;
 export function getSocket() {
   if (!socket && typeof window !== 'undefined') {
-    socket = io(BACKEND_URL || '/', {
+    socket = io('/', {
       transports: ['websocket', 'polling'],
       autoConnect: true
     });

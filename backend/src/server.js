@@ -3,12 +3,6 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 import patientRoutes from './routes/patientRoutes.js';
 import assignmentRoutes from './routes/assignmentRoutes.js';
@@ -186,18 +180,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
-
-// Serve frontend static files if production build exists (Single-service deployment)
-const distPath = path.resolve(__dirname, '../../dist');
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
-      return next();
-    }
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-}
 
 // Centralized error handler
 app.use((err, req, res, _next) => {
