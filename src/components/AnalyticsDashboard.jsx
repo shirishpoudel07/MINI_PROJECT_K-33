@@ -26,18 +26,18 @@ import {
 } from 'lucide-react';
 
 const DEFAULT_WEEKLY_PROGRESS = [
-  { day: 'Mon', date: 'Nov 5', score: 72, rom: 68, completedExercises: 3 },
-  { day: 'Tue', date: 'Nov 6', score: 78, rom: 72, completedExercises: 4 },
-  { day: 'Wed', date: 'Nov 7', score: 82, rom: 78, completedExercises: 4 },
-  { day: 'Thu', date: 'Nov 8', score: 85, rom: 84, completedExercises: 4 },
-  { day: 'Fri', date: 'Nov 9', score: 88, rom: 88, completedExercises: 4 },
-  { day: 'Sat', date: 'Nov 10', score: 92, rom: 92, completedExercises: 4 },
-  { day: 'Sun', date: 'Today', score: 88, rom: 95, completedExercises: 4 }
+  { day: 'Mon', date: 'Nov 12', score: 78, completedExercises: 5 },
+  { day: 'Tue', date: 'Nov 13', score: 82, completedExercises: 5 },
+  { day: 'Wed', date: 'Nov 14', score: 85, completedExercises: 5 },
+  { day: 'Thu', date: 'Nov 15', score: 88, completedExercises: 6 },
+  { day: 'Fri', date: 'Nov 16', score: 90, completedExercises: 6 },
+  { day: 'Sat', date: 'Nov 17', score: 94, completedExercises: 6 },
+  { day: 'Sun', date: 'Nov 18 (Today)', score: 92, completedExercises: 6 }
 ];
 
 export default function AnalyticsDashboard({ patients = [] }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMetric, setSelectedMetric] = useState('score'); // 'score' | 'rom' | 'exercises'
+  const [selectedMetric, setSelectedMetric] = useState('score'); // 'score' | 'exercises'
   const [selectedPatientTab, setSelectedPatientTab] = useState('all'); // 'all' | patient.id
 
   const totalPatients = patients.length;
@@ -72,17 +72,15 @@ export default function AnalyticsDashboard({ patients = [] }) {
       const dayLabel = item.day || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][idx % 7];
       const dateLabel = item.date || `Day ${idx + 1}`;
       const score = typeof item.score === 'number' ? item.score : 85;
-      const rom = typeof item.rom === 'number' ? item.rom : Math.round(60 + idx * 5.5);
       const exercises = typeof item.completedExercises === 'number' 
         ? item.completedExercises 
-        : (patient.activeVideos?.length || 4);
+        : (patient.activeVideos?.length || 6);
 
       return {
         day: dayLabel,
         date: dateLabel,
         displayLabel: `${dayLabel} (${dateLabel})`,
         score,
-        rom,
         exercises
       };
     });
@@ -132,17 +130,6 @@ export default function AnalyticsDashboard({ patients = [] }) {
             >
               <TrendingUp size={13} />
               <span>Adherence (%)</span>
-            </button>
-            <button
-              onClick={() => setSelectedMetric('rom')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
-                selectedMetric === 'rom' 
-                  ? 'bg-sky-600 text-white shadow-xs' 
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Activity size={13} />
-              <span>Knee ROM (°)</span>
             </button>
             <button
               onClick={() => setSelectedMetric('exercises')}
@@ -288,10 +275,8 @@ export default function AnalyticsDashboard({ patients = [] }) {
               const isSolePatient = totalPatients === 1 || selectedPatientTab === patient.id;
 
               // Data key and color based on selected metric
-              const dataKey = selectedMetric === 'rom' ? 'rom' : selectedMetric === 'exercises' ? 'exercises' : 'score';
-              const chartColor = selectedMetric === 'rom' 
-                ? '#0284c7' // Sky Blue
-                : selectedMetric === 'exercises' 
+              const dataKey = selectedMetric === 'exercises' ? 'exercises' : 'score';
+              const chartColor = selectedMetric === 'exercises' 
                 ? '#6366f1' // Indigo
                 : isHigh ? '#0284c7' : isModerate ? '#2563eb' : '#e11d48';
 
@@ -361,7 +346,7 @@ export default function AnalyticsDashboard({ patients = [] }) {
                       <div className="flex items-center gap-2">
                         <Calendar size={15} className="text-gray-500" />
                         <h4 className="text-xs sm:text-sm font-black text-gray-900 uppercase tracking-wider">
-                          Rehabilitation Timeline &amp; {selectedMetric === 'rom' ? 'Range of Motion (Degrees)' : selectedMetric === 'exercises' ? 'Routines Completed' : 'Adherence Score (%)'}
+                          Rehabilitation Timeline &amp; {selectedMetric === 'exercises' ? 'Routines Completed' : 'Adherence Score (%)'}
                         </h4>
                       </div>
                       <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded-full">
@@ -390,9 +375,9 @@ export default function AnalyticsDashboard({ patients = [] }) {
                             axisLine={false} 
                             tickLine={false} 
                             tick={{ fontSize: 11, fill: '#64748b' }} 
-                            domain={selectedMetric === 'rom' ? [40, 110] : selectedMetric === 'exercises' ? [0, 6] : [0, 100]} 
-                            ticks={selectedMetric === 'rom' ? [40, 60, 80, 100] : selectedMetric === 'exercises' ? [1, 2, 3, 4, 5] : [0, 25, 50, 75, 100]}
-                            unit={selectedMetric === 'rom' ? '°' : selectedMetric === 'exercises' ? '' : '%'}
+                            domain={selectedMetric === 'exercises' ? [0, Math.max(6, patient.activeVideos?.length || 6)] : [0, 100]} 
+                            ticks={selectedMetric === 'exercises' ? [0, 2, 4, 6] : [0, 25, 50, 75, 100]}
+                            unit={selectedMetric === 'exercises' ? '' : '%'}
                           />
                           <Tooltip 
                             contentStyle={{ 
@@ -405,12 +390,10 @@ export default function AnalyticsDashboard({ patients = [] }) {
                               padding: '10px 14px'
                             }}
                             formatter={(value) => [
-                              selectedMetric === 'rom' 
-                                ? `${value}° Flexion` 
-                                : selectedMetric === 'exercises'
+                              selectedMetric === 'exercises' 
                                 ? `${value} Routines Completed`
                                 : `${value}% Clinical Adherence`,
-                              selectedMetric === 'rom' ? 'Range of Motion' : selectedMetric === 'exercises' ? 'Completed Sets' : 'Score'
+                              selectedMetric === 'exercises' ? 'Completed Routines' : 'Score'
                             ]}
                             labelFormatter={(label) => `Timeline: ${label}`}
                           />
@@ -433,10 +416,8 @@ export default function AnalyticsDashboard({ patients = [] }) {
                       <div className="flex items-center gap-1.5 font-semibold text-gray-700">
                         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColor }}></span>
                         <span>
-                          {selectedMetric === 'rom' 
-                            ? 'Goal: Regain >90° terminal knee flexion without extensor lag' 
-                            : selectedMetric === 'exercises'
-                            ? 'Target: Complete all 4 prescribed doctor routines daily'
+                          {selectedMetric === 'exercises'
+                            ? `Target: Complete all ${patient.activeVideos?.length || 6} prescribed doctor routines daily`
                             : 'Target: Maintain ≥80% weekly adherence streak'}
                         </span>
                       </div>
@@ -463,10 +444,10 @@ export default function AnalyticsDashboard({ patients = [] }) {
 
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         {(patient.recoveryTimeline || [
-                          { phase: 'Phase 1: Acute Protection & Discharge', date: 'Oct 28', status: 'Completed', detail: 'Surgical swelling management, passive knee extension to 0°, isometric quad activation.' },
-                          { phase: 'Phase 2: Early ROM & Patellar Mobility', date: 'Nov 02', status: 'Completed', detail: 'Heel slides toward 90° flexion, straight leg raises without extensor lag.' },
-                          { phase: 'Phase 3: Active AI Strengthening', date: 'Nov 07', status: 'In Progress', detail: 'Terminal knee extensions, 3 sets of 10-12 reps with real-time pose tracking.' },
-                          { phase: 'Phase 4: Functional Closed-Chain Loading', date: 'Nov 18', status: 'Upcoming', detail: 'Bilateral shallow squats, proprioception drills, and progressive resistance loading.' }
+                          { phase: 'Phase 1: Cervical & Scapular Acute Protection', date: 'Oct 28', status: 'Completed', detail: 'Gentle passive range of motion, posture alignment, and edema relief.' },
+                          { phase: 'Phase 2: Scapulothoracic & Glenohumeral Mobility', date: 'Nov 04', status: 'Completed', detail: 'Shoulder wall crawls, active elevation, and seated cervical retractions.' },
+                          { phase: 'Phase 3: Active AI-Monitored Strengthening', date: 'Nov 12', status: 'In Progress', detail: 'Scapular retractions and postural chin tucks with real-time pose tracking.' },
+                          { phase: 'Phase 4: Functional Postural Resilience', date: 'Nov 24', status: 'Upcoming', detail: 'Full multi-planar upper-body kinetic chain integration and ergonomic loading.' }
                         ]).map((milestone, mIdx) => (
                           <div 
                             key={mIdx}

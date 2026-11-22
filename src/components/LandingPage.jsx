@@ -455,7 +455,7 @@ export default function LandingPage({
           <div className="hidden sm:flex items-center gap-2">
             <button
               type="button"
-              onClick={() => onPatientLogin(patients[0]?.id || 'p1')}
+              onClick={() => navigateToPortal('patient', 'signin')}
               className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-slate-900 bg-white/90 hover:bg-white border border-slate-200 hover:border-sky-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
               title="Patient Recovery Portal"
             >
@@ -465,7 +465,7 @@ export default function LandingPage({
             
             <button
               type="button"
-              onClick={() => onDoctorLogin(verifiedDoctors[0], 'patients')}
+              onClick={() => navigateToPortal('doctor', 'signin')}
               className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-slate-900 bg-white/90 hover:bg-white border border-slate-200 hover:border-sky-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
               title="Doctor Clinical Workspace"
             >
@@ -475,7 +475,7 @@ export default function LandingPage({
 
             <button
               type="button"
-              onClick={() => navigateToPortal('patient', 'signin')}
+              onClick={() => navigateToPortal(activePortalRole, 'signin')}
               className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 shadow-md shadow-sky-600/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
             >
               <span>Login / Register</span>
@@ -554,8 +554,7 @@ export default function LandingPage({
               <button
                 type="button"
                 onClick={() => {
-                  setMobileMenuOpen(false);
-                  onPatientLogin(patients[0]?.id || 'p1');
+                  navigateToPortal('patient', 'signin');
                 }}
                 className="py-2.5 px-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-800 border border-sky-500/30 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
               >
@@ -565,8 +564,7 @@ export default function LandingPage({
               <button
                 type="button"
                 onClick={() => {
-                  setMobileMenuOpen(false);
-                  onDoctorLogin(verifiedDoctors[0], 'patients');
+                  navigateToPortal('doctor', 'signin');
                 }}
                 className="py-2.5 px-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-800 border border-sky-500/30 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
               >
@@ -611,17 +609,17 @@ export default function LandingPage({
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => onPatientLogin(patients[0]?.id || 'p1')}
+                onClick={() => navigateToPortal('patient', 'signin')}
                 className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs sm:text-sm shadow-md shadow-sky-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
                 id="hero-start-cta"
               >
-                <span>Start Recovery</span>
+                <span>Patient Portal</span>
                 <ArrowRight size={15} />
               </button>
 
               <button
                 type="button"
-                onClick={() => onDoctorLogin(verifiedDoctors[0], 'patients')}
+                onClick={() => navigateToPortal('doctor', 'signin')}
                 className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white/95 hover:bg-white text-slate-800 border border-sky-900/15 hover:border-sky-500/40 font-bold text-xs sm:text-sm shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
                 id="hero-doctor-cta"
               >

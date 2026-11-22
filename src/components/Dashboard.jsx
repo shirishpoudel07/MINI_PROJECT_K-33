@@ -311,7 +311,7 @@ export default function Dashboard({
                 {isPlayingVideo ? (
                   <video
                     ref={dashboardVideoRef}
-                    src="/videos/squats.webm"
+                    src="/videos/shoulder-abduction.mp4"
                     autoPlay
                     loop
                     playsInline

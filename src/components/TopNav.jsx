@@ -30,8 +30,7 @@ import {
   Sliders,
   Command,
   Zap,
-  Globe,
-  User
+  Globe
 } from 'lucide-react';
 import DoctorProfileModal from './DoctorProfileModal';
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead, getSocket } from '../api/client';
@@ -84,8 +83,6 @@ export default function TopNav({
   onLogout = null,
   onNotificationAction = null,
   onOpenLanding = null,
-  onSwitchToDoctor = null,
-  onSwitchToPatient = null,
   onNavigateEnvironment = null
 }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -913,18 +910,6 @@ export default function TopNav({
                   </div>
                 )}
 
-                {/* Switch to Doctor Workspace */}
-                <button
-                  type="button"
-                  onClick={() => onSwitchToDoctor ? onSwitchToDoctor('patients') : onNavigateEnvironment && onNavigateEnvironment('doctor', 'patients')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
-                  title="Switch to Doctor Workspace (Dr. Alex Vance)"
-                  id="patient-to-doctor-btn"
-                >
-                  <Stethoscope size={13} className="text-sky-600" />
-                  <span className="hidden sm:inline">Doctor Workspace</span>
-                </button>
-
                 {/* Return to Public Landing Page */}
                 <button
                   type="button"
@@ -1083,19 +1068,7 @@ export default function TopNav({
               </button>
             </div>
 
-            <div className="pt-2 border-t border-slate-200 grid grid-cols-2 gap-2 text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  if (onSwitchToPatient) onSwitchToPatient();
-                  else if (onNavigateEnvironment) onNavigateEnvironment('patient');
-                }}
-                className="p-2.5 rounded-xl bg-sky-50 text-sky-800 border border-sky-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                <User size={14} className="text-sky-600" />
-                <span>Patient Portal</span>
-              </button>
+            <div className="pt-2 border-t border-slate-200 text-xs font-bold">
               <button
                 type="button"
                 onClick={() => {
@@ -1103,7 +1076,7 @@ export default function TopNav({
                   if (onOpenLanding) onOpenLanding();
                   else if (onNavigateEnvironment) onNavigateEnvironment('landing');
                 }}
-                className="p-2.5 rounded-xl bg-white text-slate-700 border border-slate-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                className="w-full p-2.5 rounded-xl bg-white text-slate-700 border border-slate-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
               >
                 <Globe size={14} className="text-sky-600" />
                 <span>Landing Page</span>

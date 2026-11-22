@@ -26,8 +26,6 @@ function App() {
           
           // Ensure Shirish Poudel is the primary patient assigned to Dr. Alex
           const existingShirish = nonOldDemo.find(p => p.name === 'Shirish Poudel' || p.id === 'p1');
-          const hasCvExercises = Array.isArray(existingShirish?.activeVideos) &&
-            existingShirish.activeVideos.some(v => v.id === 'ex-cv-001' || v.id === 'ex-cv-002' || v.id === 'ex-cv-003');
 
           const finalShirish = existingShirish 
             ? { 
@@ -35,12 +33,17 @@ function App() {
                 ...existingShirish, 
                 name: 'Shirish Poudel',
                 condition: initialPatients[0].condition,
-                activeVideos: hasCvExercises
-                  ? existingShirish.activeVideos.map(v => {
-                      const fresh = patientExercises.find(e => e.id === v.id);
-                      return fresh ? { ...v, ...fresh } : v;
-                    })
-                  : [...patientExercises],
+                activeVideos: (() => {
+                  const existingList = Array.isArray(existingShirish?.activeVideos) ? existingShirish.activeVideos : [];
+                  const updatedExisting = existingList.map(v => {
+                    const fresh = patientExercises.find(e => e.id === v.id || e.id === v.videoId || e.title === v.title);
+                    return fresh ? { ...v, ...fresh } : v;
+                  });
+                  const existingTitles = new Set(updatedExisting.map(v => v.title));
+                  const additions = patientExercises.filter(e => !existingTitles.has(e.title));
+                  const mergedVideos = [...updatedExisting, ...additions];
+                  return mergedVideos.length >= 5 ? mergedVideos : [...patientExercises];
+                })(),
                 assignedDoctor: 'Dr. Alex Vance, PT, DPT, PhD', 
                 assignedDoctorId: 'doc_1' 
               } 
@@ -722,7 +725,6 @@ function App() {
             selectedPatientId={selectedPatientId}
             onLogout={handleLogout}
             onOpenLanding={() => setAuthRole('landing')}
-            onSwitchToDoctor={(view = 'patients') => handleNavigateEnvironment('doctor', view)}
             onNavigateEnvironment={handleNavigateEnvironment}
           />
           <div className="flex flex-1 overflow-hidden">
@@ -767,7 +769,6 @@ function App() {
           currentDoctor={activeDoctor}
           onLogout={handleLogout}
           onOpenLanding={() => setAuthRole('landing')}
-          onSwitchToPatient={() => handleNavigateEnvironment('patient')}
           onNavigateEnvironment={handleNavigateEnvironment}
         />
         <div className="flex flex-1 overflow-hidden">

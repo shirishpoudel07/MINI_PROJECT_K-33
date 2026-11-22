@@ -208,7 +208,7 @@ export default function PlanOfVideosModal({
                           <video
                             ref={activeVideoRef}
                             key={`player-${video.id}`}
-                            src={video.videoUrl || '/videos/squats.webm'}
+                            src={video.localVideoUrl || video.videoUrl || '/videos/shoulder-abduction.mp4'}
                             autoPlay
                             loop
                             muted={isMuted}

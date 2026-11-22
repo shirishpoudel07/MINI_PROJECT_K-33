@@ -7,12 +7,11 @@ import {
   FileVideo, 
   Edit3, 
   Maximize2, 
+  Minimize2,
   X, 
   Volume2, 
   VolumeX, 
   Dumbbell, 
-  ChevronLeft, 
-  ChevronRight, 
   ArrowUp, 
   ArrowDown, 
   Search, 
@@ -30,8 +29,8 @@ export default function VideoAssignment({
   patient, 
   onAssignVideo, 
   _onToggleCollapse = null,
-  _isExpanded = true,
-  _onToggleExpand = null,
+  isExpanded = true,
+  onToggleExpand = null,
   onUpdatePatient = null,
   onSwitchToChat = null
 }) {
@@ -83,22 +82,6 @@ export default function VideoAssignment({
     setSelectedActiveId(videoId);
     setIsPlaying(true);
     try { sounds.playSend(); } catch {}
-  };
-
-  const handlePrevStep = () => {
-    if (hasPrev) {
-      setSelectedActiveId(activeVideos[safeIndex - 1].id);
-      setIsPlaying(true);
-      try { sounds.playSend(); } catch {}
-    }
-  };
-
-  const handleNextStep = () => {
-    if (hasNext) {
-      setSelectedActiveId(activeVideos[safeIndex + 1].id);
-      setIsPlaying(true);
-      try { sounds.playSend(); } catch {}
-    }
   };
 
   // Reorder exercises: Move earlier or later in routine sequence
@@ -199,8 +182,14 @@ export default function VideoAssignment({
     showToast(`🔔 Sent care plan notification with "${firstVideo.title}" thumbnail to ${patient.name}!`);
   };
 
-  // Video catalog categories
-  const categories = ['All', 'Knee & Quad Rehabilitation', 'Post-Op Knee Flexion', 'Shoulder & Rotator Cuff', 'Circulatory & Ankle Recovery'];
+  // Video catalog categories dynamically derived from catalog
+  const categories = useMemo(() => {
+    const cats = new Set(['All']);
+    availableVideos.forEach(v => {
+      if (v.category) cats.add(v.category);
+    });
+    return Array.from(cats);
+  }, []);
 
   const filteredCatalogVideos = useMemo(() => {
     return availableVideos.filter(v => {
@@ -230,100 +219,62 @@ export default function VideoAssignment({
       )}
 
       {/* ============================================================== */}
-      {/* 1. TOP THERAPY SEQUENCE STEPPER (ORDERED WORKSPACE BAR)         */}
+      {/* 1. CLEAN TOP CARE PLAN STUDIO HEADER                           */}
       {/* ============================================================== */}
       <div className="bg-white border-b border-gray-200 px-4 py-2.5 shrink-0 shadow-2xs z-10">
         <div className="flex items-center justify-between gap-3">
           
-          <div className="flex items-center space-x-2 shrink-0">
-            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-extrabold text-xs">
-              <Layers size={15} />
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center font-extrabold text-xs shadow-xs shrink-0">
+              <Layers size={16} />
             </div>
-            <div>
-              <span className="text-xs font-extrabold text-slate-900 block leading-tight">
-                Therapy Routine Sequence
-              </span>
-              <span className="text-[10px] text-slate-500 font-medium">
-                {activeVideos.length} Prescribed Exercises in Sequential Order
-              </span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight">
+                  Care Plan Studio
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60">
+                  {activeVideos.length} Prescribed Routines
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium truncate">
+                Physical therapy protocol for <strong className="text-slate-700">{patient?.name || 'Patient'}</strong>
+              </p>
             </div>
           </div>
 
-          {/* Stepper Buttons in Logical Order: Step 01 -> Step 02 -> Step 03 -> Step 04 */}
-          <div className="flex-1 flex items-center justify-center overflow-x-auto scrollbar-none py-1 px-2 space-x-2">
-            {activeVideos.map((vid, idx) => {
-              const isSelected = vid.id === activeVideoId;
-              return (
-                <button
-                  key={`step-${vid.id}-${idx}`}
-                  type="button"
-                  onClick={() => handleSelectStep(vid.id)}
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
-                    isSelected 
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-500/20' 
-                      : 'bg-white hover:bg-slate-100 text-slate-700 border-gray-200'
-                  }`}
-                  title={`Step ${idx + 1}: ${vid.title}`}
-                >
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black ${
-                    isSelected ? 'bg-white text-blue-600' : 'bg-slate-200 text-slate-700'
-                  }`}>
-                    {idx + 1}
-                  </span>
-                  <span className="truncate max-w-[140px] sm:max-w-[180px]">{vid.title}</span>
-                  {isSelected && isPlaying && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse ml-0.5"></span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Right quick actions: Prev / Next / Chat */}
+          {/* Right quick actions: Notify Patient / Chat / Maximize */}
           <div className="flex items-center space-x-1.5 shrink-0">
             <button
               type="button"
-              onClick={handlePrevStep}
-              disabled={!hasPrev}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${
-                hasPrev ? 'bg-white hover:bg-slate-100 text-slate-700 border-gray-200 cursor-pointer shadow-2xs' : 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
-              }`}
-              title="Previous Exercise in Sequence"
-            >
-              <ChevronLeft size={15} />
-            </button>
-
-            <button
-              type="button"
-              onClick={handleNextStep}
-              disabled={!hasNext}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${
-                hasNext ? 'bg-white hover:bg-slate-100 text-slate-700 border-gray-200 cursor-pointer shadow-2xs' : 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
-              }`}
-              title="Next Exercise in Sequence"
-            >
-              <ChevronRight size={15} />
-            </button>
-
-            <button
-              type="button"
               onClick={handleNotifyPatientPlan}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 shrink-0 ml-1"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
               title="Send plan notification with first video thumbnail to patient"
             >
               <Bell size={13} className="text-amber-300 animate-pulse" />
-              <span className="hidden md:inline">Notify Patient</span>
+              <span className="hidden sm:inline">Notify Patient</span>
             </button>
 
             {onSwitchToChat && (
               <button
                 type="button"
                 onClick={onSwitchToChat}
-                className="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer ml-1"
+                className="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer"
                 title={`Chat with ${patient.name}`}
               >
                 <MessageSquare size={12} />
                 <span>Chat</span>
+              </button>
+            )}
+
+            {onToggleExpand && (
+              <button
+                type="button"
+                onClick={onToggleExpand}
+                className="hidden sm:flex w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 items-center justify-center text-slate-600 hover:text-blue-600 transition-colors shadow-2xs cursor-pointer"
+                title={isExpanded ? "Restore Side-by-Side (Chat + Plan Aside)" : "Maximize Exercise Plan Studio"}
+              >
+                {isExpanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
               </button>
             )}
           </div>
@@ -756,7 +707,7 @@ export default function VideoAssignment({
               
               {/* Category Pills & Search */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-                <div className="flex items-center space-x-1.5 overflow-x-auto scrollbar-none py-0.5">
+                <div className="flex items-center space-x-1.5 overflow-x-auto scrollbar-none no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-0.5">
                   {categories.map((cat) => (
                     <button
                       key={cat}

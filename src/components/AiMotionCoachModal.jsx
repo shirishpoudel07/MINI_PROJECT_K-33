@@ -265,7 +265,7 @@ function getExerciseProtocol(title = '') {
   if (t.includes('heel') || (t.includes('slide') && !t.includes('wall') && !t.includes('press'))) {
     return {
       type: 'HEEL_SLIDES',
-      category: 'Post-Op Knee ROM',
+      category: 'Post-Op Mobility',
       name: 'Supine Heel Slides on Mat',
       targetText: 'Slide heel toward hip to bend knee (≤128°), then extend leg back flat (140°+)',
       targetAngle: 125,
@@ -297,11 +297,14 @@ function getExerciseProtocol(title = '') {
 
   if (t.includes('crawl') || (t.includes('wall') && t.includes('shoulder')) || t.includes('wall crawl')) {
     return {
-      type: 'ARM_ELEVATION',
+      type: 'WALL_CRAWL',
       category: 'Range of Motion',
       name: 'Shoulder Wall Crawls',
-      targetText: 'Stand facing wall, crawl fingers slowly up the wall into mild stretch, then slowly crawl down',
+      targetText: 'Stand facing wall, slowly crawl fingers upward to 140°+ elevation stretch, then lower (70°)',
       targetAngle: 140,
+      trackingJoints: ['hip', 'shoulder', 'elbow'],
+      cvThresholds: { high: 140, low: 70 },
+      invertLogic: false,
       defaultMode: 'pose'
     };
   }
@@ -319,22 +322,28 @@ function getExerciseProtocol(title = '') {
 
   if (t.includes('scapular') || t.includes('retraction') || t.includes('rhomboid')) {
     return {
-      type: 'SHOULDER_ROTATION',
-      category: 'Strengthening',
+      type: 'SCAPULAR_RETRACTION',
+      category: 'Strengthening & Posture',
       name: 'Standing Scapular Retractions',
-      targetText: 'Stand tall, squeeze shoulder blades together as if holding a pencil, hold for 5s',
+      targetText: 'Stand tall, squeeze shoulder blades firmly backward together (90°+ target, hold 5s), then release',
       targetAngle: 90,
+      trackingJoints: ['shoulder', 'elbow', 'hip'],
+      cvThresholds: { high: 90, low: 45 },
+      invertLogic: false,
       defaultMode: 'pose'
     };
   }
 
   if (t.includes('chin') || t.includes('tuck') || t.includes('cervical') || t.includes('neck')) {
     return {
-      type: 'PENDULUM',
+      type: 'CERVICAL_CHIN_TUCK',
       category: 'Postural Correction',
-      name: 'Seated Chin Tucks',
-      targetText: 'Sit upright, glide chin straight back into double chin, hold 3-5 seconds, then release',
-      targetAngle: 0,
+      name: 'Seated Cervical Chin Tucks',
+      targetText: 'Sit upright, glide chin straight backward into double chin alignment (hold 3-5s), then return',
+      targetAngle: 45,
+      trackingJoints: ['nose', 'ear', 'shoulder'],
+      cvThresholds: { high: 45, low: 15 },
+      invertLogic: false,
       defaultMode: 'pose'
     };
   }
@@ -856,12 +865,30 @@ export default function AiMotionCoachModal({
       primaryAngle = Math.min(leftElbow, rightElbow);
       focusJointPoint = isLeftCurled ? lm[13] : lm[14];
     } else if (targetMode === 'OVERHEAD_PRESS') {
-      // trackingJoints: ["shoulder", "elbow", "wrist"] - Overhead extension increases angle
-      const isLeftExtended = leftElbow >= rightElbow;
-      primaryAngle = Math.max(leftElbow, rightElbow);
-      focusJointPoint = isLeftExtended ? lm[13] : lm[14];
+      // trackingJoints: ["shoulder", "elbow", "wrist"] - Combined multi-joint reach
+      const activeElev = Math.max(leftShoulder, rightShoulder);
+      const activeExt = Math.max(leftElbow, rightElbow);
+      primaryAngle = Math.round((activeElev + activeExt) / 2);
+      focusJointPoint = (leftShoulder >= rightShoulder) ? (lm[13] || lm[15]) : (lm[14] || lm[16]);
+    } else if (targetMode === 'WALL_CRAWL') {
+      // Wall Crawls: tracking glenohumeral forward elevation angle relative to torso
+      const isLeftHigher = (lm[15]?.y ?? 1) <= (lm[16]?.y ?? 1);
+      primaryAngle = Math.max(leftShoulder, rightShoulder);
+      focusJointPoint = isLeftHigher ? (lm[13] || lm[15]) : (lm[14] || lm[16]);
+    } else if (targetMode === 'SCAPULAR_RETRACTION') {
+      // Scapular Retractions: upper arm retraction angle relative to torso / posterior excursion
+      const leftRetract = calculateAngle(lm[13], lm[11], leftHipPt);
+      const rightRetract = calculateAngle(lm[14], lm[12], rightHipPt);
+      primaryAngle = Math.round(Math.max(leftRetract, rightRetract));
+      focusJointPoint = (lm[11]?.visibility || 0) >= (lm[12]?.visibility || 0) ? lm[11] : lm[12];
+    } else if (targetMode === 'CERVICAL_CHIN_TUCK') {
+      // Cervical Chin Tucks: sagittal cranio-cervical retraction angle relative to spinal axis
+      const leftCervical = calculateAngle(lm[7] || lm[0], lm[11], leftHipPt);
+      const rightCervical = calculateAngle(lm[8] || lm[0], lm[12], rightHipPt);
+      primaryAngle = Math.round((leftCervical + rightCervical) / 2);
+      focusJointPoint = lm[0] || lm[11];
     } else if (targetMode === 'ARM_ELEVATION') {
-      primaryAngle = activeElbow;
+      primaryAngle = Math.max(leftShoulder, rightShoulder);
       focusJointPoint = (hasLeftElbow && (!hasRightElbow || leftElbow >= rightElbow))
         ? (lm[13] || lm[15])
         : (lm[14] || lm[16] || leftShoulderPt || rightShoulderPt);
@@ -962,22 +989,29 @@ export default function AiMotionCoachModal({
     const hasReachedPeak = isUp;
     const isRepInProgress = isMoving;
 
+    // Precise Kinematic Analysis: Biomechanical scoring from live joint geometry
+    const symmetryDelta = Math.abs(leftShoulder - rightShoulder);
+    const posturePenalty = torsoTilt > 15 ? Math.min(18, Math.round((torsoTilt - 15) * 1.2)) : 0;
+    const symmetryPenalty = symmetryDelta > 20 ? Math.min(15, Math.round((symmetryDelta - 20) * 0.7)) : 0;
+
     let dynamicVerdict = 'TRACKING';
-    let dynamicScore = 92;
+    let baseScore = 90;
 
     if (hasReachedPeak) {
-      dynamicVerdict = 'CORRECT';
-      dynamicScore = 98;
+      dynamicVerdict = 'EXCELLENT FORM';
+      baseScore = 98;
     } else if (trackResult.isCooldownActive) {
-      dynamicVerdict = 'CORRECT';
-      dynamicScore = 96;
+      dynamicVerdict = 'REP COUNTED';
+      baseScore = 96;
     } else if (isRepInProgress) {
-      dynamicVerdict = 'MOVING';
-      dynamicScore = 90;
+      dynamicVerdict = trackResult.progressPercent >= 60 ? 'OPTIMAL ARC' : 'IN MOTION';
+      baseScore = Math.min(94, 76 + Math.round(trackResult.progressPercent * 0.18));
     } else {
-      dynamicVerdict = 'TRACKING';
-      dynamicScore = 92;
+      dynamicVerdict = 'READY / BASELINE';
+      baseScore = 91;
     }
+
+    const dynamicScore = Math.max(65, Math.min(100, baseScore - posturePenalty - symmetryPenalty));
 
     // Debounced Form Correction Audio Prompt (patient stalled > 3s without reaching high threshold)
     const isAttemptingRep = !isUp && trackResult.progressPercent > 18;

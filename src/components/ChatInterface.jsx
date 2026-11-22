@@ -386,9 +386,11 @@ export default function ChatInterface({
   const handleAttachVideo = () => {
     if (!patient?.id) return;
     const firstVideo = patient?.activeVideos?.[0] || {
-      videoUrl: '/videos/squats.webm',
-      thumbnail: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Squat Rehabilitation Protocol'
+      title: 'Seated Active Shoulder Abduction',
+      youtubeId: 'F_e3U4-Hbr8',
+      videoUrl: 'https://www.youtube.com/embed/F_e3U4-Hbr8',
+      thumbnail: 'https://img.youtube.com/vi/F_e3U4-Hbr8/hqdefault.jpg',
+      localVideoUrl: '/videos/shoulder-abduction.mp4'
     };
     sounds.playSend();
     // oxlint-disable-next-line react/purity
@@ -405,6 +407,8 @@ export default function ChatInterface({
       text: attachmentText,
       message_text: attachmentText,
       videoUrl: firstVideo.videoUrl,
+      localVideoUrl: firstVideo.localVideoUrl,
+      youtubeId: firstVideo.youtubeId,
       thumbnail: firstVideo.thumbnail,
       title: firstVideo.title,
       timestamp: readableTime,
