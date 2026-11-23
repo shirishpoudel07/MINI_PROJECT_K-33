@@ -30,7 +30,11 @@ import {
   Sliders,
   Command,
   Zap,
-  Globe
+  Globe,
+  GraduationCap,
+  ExternalLink,
+  FileText,
+  Sparkles
 } from 'lucide-react';
 import DoctorProfileModal from './DoctorProfileModal';
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead, getSocket } from '../api/client';
@@ -93,6 +97,7 @@ export default function TopNav({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDoctorMenuOpen, setIsDoctorMenuOpen] = useState(false);
 
   // Notifications State
   const [notifications, setNotifications] = useState(initialDemoNotifications);
@@ -125,6 +130,7 @@ export default function TopNav({
   const settingsRef = useRef(null);
   const searchRef = useRef(null);
   const searchInputRef = useRef(null);
+  const doctorMenuRef = useRef(null);
 
   // Logo click in doctor mode navigates to Dashboard
   const handleLogoClick = () => {
@@ -152,6 +158,7 @@ export default function TopNav({
         setIsNotificationsOpen(false);
         setIsSettingsOpen(false);
         setIsMobileMenuOpen(false);
+        setIsDoctorMenuOpen(false);
       }
     };
 
@@ -198,6 +205,9 @@ export default function TopNav({
       }
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setIsSearchOpen(false);
+      }
+      if (doctorMenuRef.current && !doctorMenuRef.current.contains(event.target)) {
+        setIsDoctorMenuOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -318,7 +328,7 @@ export default function TopNav({
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-[#faf8f2]/90 backdrop-blur-2xl border-b border-sky-900/10 shadow-[0_4px_24px_-4px_rgba(14,165,233,0.06)] font-sans">
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] font-sans">
         {/* Top Accent Gradient Line */}
         <div className="h-[2px] w-full bg-gradient-to-r from-sky-500 via-blue-500 to-cyan-500" />
 
@@ -455,105 +465,45 @@ export default function TopNav({
                     setIsSearchOpen(true);
                     setTimeout(() => searchInputRef.current?.focus(), 50);
                   }}
-                  className="hidden sm:flex xl:hidden p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer shadow-2xs"
+                  className="hidden sm:flex xl:hidden p-2 rounded-xl text-slate-500 hover:text-sky-700 hover:bg-sky-50 border border-slate-200 transition-all cursor-pointer shadow-2xs"
                   title="Quick Search Patients (Ctrl+K)"
                   aria-label="Quick Search Patients"
+                  id="doctor-search-btn-icon"
                 >
                   <Search size={16} />
                 </button>
 
                 {/* Quick Patient Command Search (Doctor Mode, Desktop) */}
-                <div ref={searchRef} className="relative hidden xl:block">
-                  <div 
+                <div className="relative hidden xl:block">
+                  <button 
+                    type="button"
                     onClick={() => {
                       setIsSearchOpen(true);
                       setTimeout(() => searchInputRef.current?.focus(), 50);
                     }}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-white/90 hover:bg-white border border-slate-200 hover:border-sky-400/80 rounded-xl cursor-pointer transition-all w-52 2xl:w-64 text-slate-500 shadow-2xs group"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-white/90 hover:bg-white border border-slate-200 hover:border-sky-400 rounded-xl cursor-pointer transition-all w-48 2xl:w-60 text-slate-500 shadow-2xs group select-none text-left"
+                    title="Search cohort patients (Ctrl+K)"
+                    id="doctor-search-btn-bar"
                   >
                     <Search size={14} className="text-slate-400 group-hover:text-sky-600 transition-colors shrink-0" />
                     <span className="text-xs truncate flex-1 font-medium text-slate-500 group-hover:text-slate-700">Quick search patient...</span>
-                    <kbd className="hidden 2xl:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-mono bg-slate-50 border border-slate-200 rounded text-slate-500 shadow-2xs">
+                    <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-mono bg-slate-100 border border-slate-200 rounded text-slate-500 shadow-2xs">
                       Ctrl K
                     </kbd>
-                  </div>
-
-                  {/* Patient Search Popover */}
-                  {isSearchOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-scale-up">
-                      <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
-                        <Search size={16} className="text-blue-600 shrink-0" />
-                        <input
-                          ref={searchInputRef}
-                          type="text"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Search patient by name, ID, or condition..."
-                          className="w-full bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none font-medium"
-                          autoFocus
-                        />
-                        {searchQuery && (
-                          <button
-                            type="button"
-                            onClick={() => setSearchQuery('')}
-                            className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
-                          >
-                            <X size={14} />
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
-                        {filteredPatients.length === 0 ? (
-                          <div className="p-6 text-center text-xs text-slate-400">
-                            No patients found matching "{searchQuery}"
-                          </div>
-                        ) : (
-                          filteredPatients.map(patient => (
-                            <div
-                              key={patient.id}
-                              onClick={() => {
-                                if (onSelectPatient) onSelectPatient(patient.id);
-                                if (onViewChange) onViewChange('patients');
-                                setIsSearchOpen(false);
-                                setSearchQuery('');
-                              }}
-                              className={`p-3 hover:bg-blue-50/70 cursor-pointer transition-colors flex items-center justify-between gap-3 ${
-                                patient.id === selectedPatientId ? 'bg-blue-50/50' : ''
-                              }`}
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="w-7 h-7 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
-                                  {patient.name?.split(' ').map(n => n[0]).join('') || 'PT'}
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="text-xs font-bold text-slate-900 truncate">
-                                    {patient.name}
-                                  </div>
-                                  <div className="text-[10px] text-slate-500 truncate">
-                                    {patient.condition || 'General Rehabilitation'}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                {patient.id === selectedPatientId && (
-                                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-700">
-                                    Active Chart
-                                  </span>
-                                )}
-                                <ChevronRight size={14} className="text-slate-400" />
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-
-                      <div className="p-2 bg-slate-50 border-t border-slate-100 text-[10px] text-slate-500 text-center font-medium">
-                        Press <kbd className="px-1 py-0.5 bg-white border border-slate-200 rounded font-mono">ESC</kbd> to exit search
-                      </div>
-                    </div>
-                  )}
+                  </button>
                 </div>
+
+                {/* Direct Landing Page Shortcut for Clinicians */}
+                <button
+                  type="button"
+                  onClick={() => onOpenLanding ? onOpenLanding() : onNavigateEnvironment && onNavigateEnvironment('landing')}
+                  className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white hover:bg-sky-50 text-slate-700 hover:text-sky-700 border border-slate-200 hover:border-sky-300 text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
+                  title="Preview Public Landing Page"
+                  id="doctor-to-landing-btn"
+                >
+                  <Globe size={13} className="text-sky-600" />
+                  <span>Landing Page</span>
+                </button>
 
                 {/* Mobile Navigation Menu Toggle (Doctor Mode) */}
                 <button
@@ -841,32 +791,146 @@ export default function TopNav({
                   )}
                 </div>
 
-                <div className="h-6 w-px bg-slate-200 mx-1" />
+                <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
 
-                {/* Doctor Profile Pill */}
-                <button
-                  type="button"
-                  onClick={() => setIsProfileOpen(true)}
-                  className="flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-full hover:bg-sky-50 border border-slate-200 hover:border-sky-300 transition-all cursor-pointer group shadow-2xs bg-white"
-                  id="doctor-profile-btn"
-                  title="Click to view Doctor Profile, Degrees & Credentials"
-                >
-                  <div className="w-7 h-7 rounded-full bg-sky-50 border border-sky-200 text-sky-700 flex items-center justify-center shrink-0 group-hover:bg-sky-600 group-hover:text-white transition-colors relative">
-                    <Stethoscope size={13} />
-                    <span className="w-2 h-2 rounded-full bg-sky-500 border border-white absolute -bottom-0.5 -right-0.5" title="On Duty" />
-                  </div>
-                  <div className="hidden sm:flex flex-col text-left">
-                    <span className="text-xs font-bold text-slate-800 leading-tight group-hover:text-sky-700 transition-colors">
-                      {currentDoctor?.shortName || currentDoctor?.name?.split(',')[0] || 'Dr. Alex Vance'}
-                    </span>
-                    <span className="text-[10px] text-sky-700 font-semibold leading-none truncate max-w-[120px]">
-                      {currentDoctor?.clinic ? currentDoctor.clinic.split(' ')[0] : 'VirtuHeal'} &bull; On Duty
-                    </span>
-                  </div>
-                  <ChevronDown size={12} className="text-slate-400 group-hover:text-slate-600 transition-colors ml-0.5 hidden sm:block" />
-                </button>
+                {/* Doctor Profile Pill with Dropdown */}
+                <div ref={doctorMenuRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsDoctorMenuOpen(!isDoctorMenuOpen)}
+                    className={`flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-2xl border transition-all cursor-pointer group shadow-2xs ${
+                      isDoctorMenuOpen
+                        ? 'bg-sky-50 border-sky-300 ring-2 ring-sky-500/15'
+                        : 'bg-white hover:bg-sky-50/70 border-slate-200 hover:border-sky-300'
+                    }`}
+                    id="doctor-profile-btn"
+                    title="Clinician Account, Credentials & Settings"
+                  >
+                    <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-sky-600 to-blue-700 text-white flex items-center justify-center shrink-0 shadow-xs relative">
+                      <Stethoscope size={13} />
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 border border-white absolute -bottom-0.5 -right-0.5" title="On Duty" />
+                    </div>
+                    <div className="hidden sm:flex flex-col text-left">
+                      <span className="text-xs font-bold text-slate-800 leading-tight group-hover:text-sky-700 transition-colors">
+                        {currentDoctor?.shortName || currentDoctor?.name?.split(',')[0] || 'Dr. Alex Vance'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-semibold leading-none truncate max-w-[120px]">
+                        {currentDoctor?.clinic ? currentDoctor.clinic.split(' ')[0] : 'VirtuHeal'} &bull; <span className="text-emerald-600 font-bold">On Duty</span>
+                      </span>
+                    </div>
+                    <ChevronDown size={12} className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-200 ml-0.5 hidden sm:block ${isDoctorMenuOpen ? 'rotate-180 text-sky-600' : ''}`} />
+                  </button>
 
-                <div className="h-6 w-px bg-slate-200 mx-0.5" />
+                  {/* Clinician Popover Menu */}
+                  {isDoctorMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-scale-up">
+                      {/* Clinician Header */}
+                      <div className="p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-sky-950 text-white">
+                        <div className="flex items-center gap-3 mb-2.5">
+                          <div className="w-10 h-10 rounded-2xl bg-sky-500/20 border border-sky-400/30 text-sky-300 flex items-center justify-center shrink-0">
+                            <Stethoscope size={20} />
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-black truncate text-white">
+                              {currentDoctor?.name || 'Dr. Alex Vance, PT, DPT, PhD'}
+                            </h4>
+                            <p className="text-[11px] text-sky-200 truncate">
+                              {currentDoctor?.title || 'Chief of Physical Rehabilitation'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[10px] text-slate-300">
+                          <span className="truncate max-w-[170px]">{currentDoctor?.clinic || 'VirtuHeal Clinical Center'}</span>
+                          <span className="inline-flex items-center gap-1 font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                            <ShieldCheck size={11} />
+                            Board Certified
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Menu Options */}
+                      <div className="p-2 space-y-1 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsDoctorMenuOpen(false);
+                            setIsProfileOpen(true);
+                          }}
+                          className="w-full px-3 py-2.5 rounded-xl hover:bg-sky-50 text-slate-700 hover:text-sky-700 flex items-center justify-between font-bold transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <GraduationCap size={16} className="text-sky-600 group-hover:scale-110 transition-transform" />
+                            <span>Clinical Credentials & Degrees</span>
+                          </div>
+                          <ChevronRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsDoctorMenuOpen(false);
+                            if (onOpenLanding) onOpenLanding();
+                            else if (onNavigateEnvironment) onNavigateEnvironment('landing');
+                          }}
+                          className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-100 text-slate-700 hover:text-slate-900 flex items-center justify-between font-semibold transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Globe size={16} className="text-sky-600" />
+                            <span>Preview Public Landing Page</span>
+                          </div>
+                          <ExternalLink size={13} className="text-slate-400" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsDoctorMenuOpen(false);
+                            setIsHelpOpen(true);
+                          }}
+                          className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-100 text-slate-700 hover:text-slate-900 flex items-center justify-between font-semibold transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <HelpCircle size={16} className="text-slate-500" />
+                            <span>Clinical Setup & AI Guide</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsDoctorMenuOpen(false);
+                            setIsSettingsOpen(true);
+                          }}
+                          className="w-full px-3 py-2.5 rounded-xl hover:bg-slate-100 text-slate-700 hover:text-slate-900 flex items-center justify-between font-semibold transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Sliders size={16} className="text-slate-500" />
+                            <span>Telemetry & AR Preferences</span>
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* Logout Row */}
+                      {onLogout && (
+                        <div className="p-2 border-t border-slate-100 bg-slate-50">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsDoctorMenuOpen(false);
+                              onLogout();
+                            }}
+                            className="w-full px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer border border-rose-200"
+                          >
+                            <LogOut size={14} />
+                            <span>Sign Out of Doctor Session</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="h-6 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
                 {/* Sign Out Button (Doctor Mode) */}
                 {onLogout && (
@@ -1013,26 +1077,73 @@ export default function TopNav({
         {/* ============================================================ */}
         {/* MOBILE NAVIGATION DRAWER (FOR DOCTOR MODE ON SMALL SCREENS)  */}
         {/* ============================================================ */}
+        {/* Mobile Navigation Menu (Doctor Mode Drawer) */}
         {authRole === 'doctor' && isMobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-200 bg-white/98 backdrop-blur-xl px-4 py-3 space-y-2 animate-fade-in">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">
-              Clinician Views
+          <div className="md:hidden border-t border-slate-200 bg-white/98 backdrop-blur-2xl px-4 py-4 space-y-3 animate-fade-in shadow-xl">
+            {/* Clinician Identity Banner */}
+            <div className="p-3 bg-gradient-to-r from-sky-50 to-blue-50/80 rounded-2xl border border-sky-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-600 to-blue-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Stethoscope size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-black text-slate-900 truncate">
+                    {currentDoctor?.shortName || currentDoctor?.name || 'Dr. Alex Vance'}
+                  </div>
+                  <div className="text-[10px] text-sky-700 font-semibold truncate">
+                    {currentDoctor?.clinic || 'VirtuHeal Clinical Center'}
+                  </div>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                On Duty
+              </span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+
+            {/* Quick Search Patient in Mobile */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsSearchOpen(true);
+                setTimeout(() => searchInputRef.current?.focus(), 50);
+              }}
+              className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-2.5 text-xs font-semibold transition-all cursor-pointer"
+            >
+              <Search size={15} className="text-sky-600" />
+              <span className="text-slate-500">Search patients by name or ID...</span>
+              <kbd className="ml-auto text-[9px] font-mono bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-400">
+                Ctrl+K
+              </kbd>
+            </button>
+
+            {/* Navigation Tab Links */}
+            <div className="space-y-1.5">
               <button
                 type="button"
                 onClick={() => {
                   if (onViewChange) onViewChange('dashboard');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`p-2 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all ${
+                className={`w-full p-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
                   currentView === 'dashboard'
-                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    ? 'bg-sky-50 text-sky-700 border border-sky-200 shadow-2xs'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80'
                 }`}
               >
-                <LayoutDashboard size={16} />
-                <span>Dashboard</span>
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                    currentView === 'dashboard' ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    <LayoutDashboard size={15} />
+                  </div>
+                  <div className="text-left">
+                    <div>Dashboard</div>
+                    <div className="text-[10px] font-normal text-slate-400">Daily triage, schedule & cohort adherence</div>
+                  </div>
+                </div>
+                <ChevronRight size={14} className="text-slate-400" />
               </button>
 
               <button
@@ -1041,14 +1152,31 @@ export default function TopNav({
                   if (onViewChange) onViewChange('patients');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`p-2 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all ${
+                className={`w-full p-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
                   currentView === 'patients'
-                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    ? 'bg-sky-50 text-sky-700 border border-sky-200 shadow-2xs'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80'
                 }`}
               >
-                <Users size={16} />
-                <span>Workspace ({patients.length})</span>
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                    currentView === 'patients' ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    <Users size={15} />
+                  </div>
+                  <div className="text-left">
+                    <div className="flex items-center gap-1.5">
+                      <span>Patients & Workspace</span>
+                      {patients.length > 0 && (
+                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-sky-100 text-sky-800">
+                          {patients.length} active
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[10px] font-normal text-slate-400">Live ROM telemetry, charts & video protocols</div>
+                  </div>
+                </div>
+                <ChevronRight size={14} className="text-slate-400" />
               </button>
 
               <button
@@ -1057,18 +1185,44 @@ export default function TopNav({
                   if (onViewChange) onViewChange('analytics');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`p-2 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all ${
+                className={`w-full p-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
                   currentView === 'analytics'
-                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    ? 'bg-sky-50 text-sky-700 border border-sky-200 shadow-2xs'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200/80'
                 }`}
               >
-                <TrendingUp size={16} />
-                <span>Analytics</span>
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                    currentView === 'analytics' ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    <TrendingUp size={15} />
+                  </div>
+                  <div className="text-left">
+                    <div className="flex items-center gap-1.5">
+                      <span>Cohort Analytics</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    </div>
+                    <div className="text-[10px] font-normal text-slate-400">Recovery velocity & adherence reports</div>
+                  </div>
+                </div>
+                <ChevronRight size={14} className="text-slate-400" />
               </button>
             </div>
 
+            {/* Additional Actions */}
             <div className="pt-2 border-t border-slate-200 space-y-2 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsProfileOpen(true);
+                }}
+                className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+              >
+                <GraduationCap size={14} className="text-sky-600" />
+                <span>Doctor Credentials & Degrees</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -1076,10 +1230,10 @@ export default function TopNav({
                   if (onOpenLanding) onOpenLanding();
                   else if (onNavigateEnvironment) onNavigateEnvironment('landing');
                 }}
-                className="w-full p-2.5 rounded-xl bg-white text-slate-700 border border-slate-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                className="w-full p-2.5 rounded-xl bg-white text-slate-700 border border-slate-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
               >
                 <Globe size={14} className="text-sky-600" />
-                <span>Landing Page</span>
+                <span>Preview Public Landing Page</span>
               </button>
 
               {onLogout && (
@@ -1089,7 +1243,7 @@ export default function TopNav({
                     setIsMobileMenuOpen(false);
                     onLogout();
                   }}
-                  className="w-full p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
+                  className="w-full p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs transition-all"
                   id="mobile-doctor-logout-btn"
                 >
                   <LogOut size={14} />
@@ -1327,11 +1481,127 @@ export default function TopNav({
         </div>
       )}
 
+      {/* Global Patient Command Palette Modal (Spotlight / Raycast style for all screen sizes) */}
+      {isSearchOpen && (
+        <div 
+          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-start justify-center pt-16 sm:pt-24 px-4 animate-fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsSearchOpen(false);
+          }}
+        >
+          <div 
+            ref={searchRef}
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden w-full max-w-xl animate-scale-up"
+          >
+            {/* Search Input Bar */}
+            <div className="p-4 bg-slate-50/90 border-b border-slate-200 flex items-center gap-3">
+              <Search size={18} className="text-sky-600 shrink-0" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search patient by name, ID, or condition..."
+                className="w-full bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-semibold"
+                autoFocus
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  title="Clear search"
+                >
+                  <X size={16} />
+                </button>
+              ) : (
+                <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono bg-white border border-slate-200 rounded text-slate-500 shadow-2xs">
+                  ESC
+                </kbd>
+              )}
+            </div>
+
+            {/* Patients List Results */}
+            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 p-2">
+              {filteredPatients.length === 0 ? (
+                <div className="py-12 text-center text-xs text-slate-400 space-y-1">
+                  <Users size={28} className="mx-auto text-slate-300 mb-2" />
+                  <p className="font-bold text-slate-700 text-sm">No patients found</p>
+                  <p>No cohort records match "{searchQuery}"</p>
+                </div>
+              ) : (
+                filteredPatients.map(patient => (
+                  <div
+                    key={patient.id}
+                    onClick={() => {
+                      if (onSelectPatient) onSelectPatient(patient.id);
+                      if (onViewChange) onViewChange('patients');
+                      setIsSearchOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className={`p-3 rounded-xl hover:bg-sky-50/80 cursor-pointer transition-all flex items-center justify-between gap-3 group ${
+                      patient.id === selectedPatientId ? 'bg-sky-50/60 border border-sky-200/60' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                        {patient.name?.split(' ').map(n => n[0]).join('') || 'PT'}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-900 truncate group-hover:text-sky-700 transition-colors">
+                            {patient.name}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.2 rounded">
+                            #{patient.id}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 truncate">
+                          {patient.condition || 'General Rehabilitation'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {typeof patient.adherenceScore === 'number' && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          patient.adherenceScore >= 80 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : patient.adherenceScore >= 60 
+                              ? 'bg-amber-100 text-amber-800' 
+                              : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          {patient.adherenceScore}% Adherence
+                        </span>
+                      )}
+                      {patient.id === selectedPatientId && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">
+                          Active Chart
+                        </span>
+                      )}
+                      <ChevronRight size={15} className="text-slate-400 group-hover:text-sky-600 group-hover:translate-x-0.5 transition-all" />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Palette Footer */}
+            <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between px-4">
+              <span>Click or tap to open clinical chart</span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded font-mono text-[10px]">ESC</kbd> to close
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Doctor Profile Modal */}
       <DoctorProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         doctor={currentDoctor}
+        onLogout={onLogout}
       />
     </>
   );
