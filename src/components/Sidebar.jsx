@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Activity, ChevronRight, ChevronLeft, Users, X, FileCheck, Stethoscope, Lock } from 'lucide-react';
+import { Search, Activity, ChevronRight, ChevronLeft, Users, X, FileCheck, Stethoscope, Lock, LogOut } from 'lucide-react';
 import { isPatientAssignedToDoctor } from '../utils/doctorHelpers';
 
 function HighlightText({ text, query }) {
@@ -28,7 +28,8 @@ export default function Sidebar({
   _verifiedDoctors = [],
   _onSelectDoctor = null,
   _onOpenDoctorModal = null,
-  onViewDoctorProfile = null
+  onViewDoctorProfile = null,
+  onLogout = null
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -122,8 +123,19 @@ export default function Sidebar({
           })}
         </div>
 
-        {/* Bottom online indicator */}
-        <div className="pt-2 border-t border-slate-100 w-full flex justify-center">
+        {/* Bottom online indicator & Collapsed Sign Out */}
+        <div className="pt-2 border-t border-slate-100 w-full flex flex-col items-center gap-2">
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95"
+              title="Sign out of Doctor Portal"
+              id="sidebar-collapsed-doctor-logout-btn"
+            >
+              <LogOut size={15} />
+            </button>
+          )}
           <div className="w-2 h-2 rounded-full bg-sky-500" title="Online Clinical Sync"></div>
         </div>
       </div>
@@ -380,12 +392,27 @@ export default function Sidebar({
         )}
       </div>
       
-      <div className="p-3 border-t border-gray-200 bg-gray-50 text-xs font-medium text-gray-500 flex items-center justify-between">
-        <span className="truncate text-[11px]">{currentDoctor?.clinic || 'VirtuHeal Hospital'}</span>
-        <div className="flex items-center space-x-1 shrink-0">
-          <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
-          <span className="text-[10px] text-gray-600 font-bold uppercase">Staff</span>
+      <div className="p-3 border-t border-gray-200 bg-gray-50 flex flex-col gap-2">
+        <div className="text-xs font-medium text-gray-500 flex items-center justify-between">
+          <span className="truncate text-[11px]">{currentDoctor?.clinic || 'VirtuHeal Hospital'}</span>
+          <div className="flex items-center space-x-1 shrink-0">
+            <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
+            <span className="text-[10px] text-gray-600 font-bold uppercase">Staff</span>
+          </div>
         </div>
+
+        {onLogout && (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="w-full py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
+            title="Sign out of Doctor Portal"
+            id="sidebar-doctor-logout-btn"
+          >
+            <LogOut size={13} />
+            <span>Sign Out</span>
+          </button>
+        )}
       </div>
     </div>
   );

@@ -780,6 +780,7 @@ function App() {
                 setCurrentView(view);
               }}
               doctor={activeDoctor}
+              onLogout={handleLogout}
             />
           )}
 
@@ -794,6 +795,7 @@ function App() {
                   setProfileModalDoctor(doc || activeDoctor);
                   setIsDoctorProfileModalOpen(true);
                 }}
+                onLogout={handleLogout}
               />
               <PatientWorkspace
                 patient={selectedPatient}
@@ -817,6 +819,7 @@ function App() {
           isOpen={isDoctorProfileModalOpen}
           onClose={() => setIsDoctorProfileModalOpen(false)}
           doctor={profileModalDoctor || activeDoctor}
+          onLogout={handleLogout}
         />
       </div>
     </div>

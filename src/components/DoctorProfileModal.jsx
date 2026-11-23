@@ -13,10 +13,11 @@ import {
   Stethoscope, 
   Sparkles,
   Activity,
-  Users
+  Users,
+  LogOut
 } from 'lucide-react';
 
-export default function DoctorProfileModal({ isOpen, onClose, doctor: customDoctor = null }) {
+export default function DoctorProfileModal({ isOpen, onClose, doctor: customDoctor = null, onLogout = null }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'degrees' | 'research' | 'experience'
 
   if (!isOpen) return null;
@@ -437,12 +438,29 @@ export default function DoctorProfileModal({ isOpen, onClose, doctor: customDoct
             <span className="w-2 h-2 rounded-full bg-sky-500"></span>
             <span>VirtuHeal Verified Practitioner Credentials</span>
           </div>
-          <button
-            onClick={onClose}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs shadow-sm transition-colors"
-          >
-            Close Profile
-          </button>
+          <div className="flex items-center gap-2">
+            {onLogout && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onLogout();
+                }}
+                className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                id="modal-doctor-logout-btn"
+                title="Sign out of Doctor Session"
+              >
+                <LogOut size={13} />
+                <span>Sign Out</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs shadow-sm transition-colors"
+            >
+              Close Profile
+            </button>
+          </div>
         </div>
       </div>
     </div>

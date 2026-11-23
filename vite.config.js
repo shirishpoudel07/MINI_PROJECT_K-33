@@ -8,12 +8,22 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('error', (err, _req, _res) => {
+            // Suppress noisy unhandled ECONNREFUSED when backend is offline
+          });
+        },
       },
       '/socket.io': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         ws: true,
+        configure: (proxy) => {
+          proxy.on('error', (err, _req, _res) => {
+            // Suppress noisy unhandled ws proxy ECONNREFUSED when backend is offline
+          });
+        },
       },
     },
   },

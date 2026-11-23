@@ -878,7 +878,7 @@ export default function TopNav({
                     id="doctor-logout-btn"
                   >
                     <LogOut size={13} />
-                    <span className="hidden sm:inline">Sign Out</span>
+                    <span>Sign Out</span>
                   </button>
                 )}
               </>
@@ -1068,7 +1068,7 @@ export default function TopNav({
               </button>
             </div>
 
-            <div className="pt-2 border-t border-slate-200 text-xs font-bold">
+            <div className="pt-2 border-t border-slate-200 space-y-2 text-xs font-bold">
               <button
                 type="button"
                 onClick={() => {
@@ -1081,6 +1081,21 @@ export default function TopNav({
                 <Globe size={14} className="text-sky-600" />
                 <span>Landing Page</span>
               </button>
+
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    onLogout();
+                  }}
+                  className="w-full p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
+                  id="mobile-doctor-logout-btn"
+                >
+                  <LogOut size={14} />
+                  <span>Sign Out of Doctor Session</span>
+                </button>
+              )}
             </div>
           </div>
         )}

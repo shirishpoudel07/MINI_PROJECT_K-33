@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AlertCircle, Clock, CheckCircle2, MessageSquare, Video, Calendar, ArrowRight, Activity, Users, TrendingUp, PlayCircle, Stethoscope } from 'lucide-react';
+import { AlertCircle, Clock, CheckCircle2, MessageSquare, Video, Calendar, ArrowRight, Activity, Users, TrendingUp, PlayCircle, Stethoscope, LogOut } from 'lucide-react';
 import { fetchDashboardSummary } from '../api/client';
 import { isPatientAssignedToDoctor } from '../utils/doctorHelpers';
 
@@ -8,7 +8,8 @@ export default function Dashboard({
   onNavigate, 
   doctor = null,
   _verifiedDoctors = [],
-  _onSelectDoctor = null
+  _onSelectDoctor = null,
+  onLogout = null
 }) {
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
   const [dbSummary, setDbSummary] = useState(null);
@@ -94,13 +95,27 @@ export default function Dashboard({
             </p>
           </div>
           
-          <button 
-            onClick={() => onNavigate('patients')}
-            className="relative z-10 px-5 py-2.5 bg-white text-sky-800 font-bold rounded-xl text-xs hover:bg-sky-50 hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center group active:scale-95 cursor-pointer"
-          >
-            Go to Workspace
-            <ArrowRight size={15} className="ml-1.5 group-hover:translate-x-1 transition-transform" />
-          </button>
+          <div className="relative z-10 flex items-center gap-2.5">
+            {onLogout && (
+              <button 
+                type="button"
+                onClick={onLogout}
+                className="px-3.5 py-2.5 bg-white/15 hover:bg-rose-600/90 text-white font-bold rounded-xl text-xs border border-white/25 hover:border-rose-400 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer shadow-sm backdrop-blur-xs"
+                title="Sign out of Doctor Portal"
+                id="dashboard-doctor-logout-btn"
+              >
+                <LogOut size={14} />
+                <span>Sign Out</span>
+              </button>
+            )}
+            <button 
+              onClick={() => onNavigate('patients')}
+              className="px-5 py-2.5 bg-white text-sky-800 font-bold rounded-xl text-xs hover:bg-sky-50 hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center group active:scale-95 cursor-pointer"
+            >
+              Go to Workspace
+              <ArrowRight size={15} className="ml-1.5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
         </div>
 
         {/* Section: Doctor Assigned Overview */}
