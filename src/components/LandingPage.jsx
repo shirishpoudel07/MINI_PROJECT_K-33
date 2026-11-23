@@ -40,36 +40,57 @@ export default function LandingPage({
   // Mobile Navigation Drawer
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Dynamic Scroll & Section Spy
+  // Dynamic Scroll & Section Spy (High-performance, zero-reflow IntersectionObserver)
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
 
   useEffect(() => {
-    let ticking = false;
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const scrolled = window.scrollY > 20;
-          setIsScrolled(prev => (prev !== scrolled ? scrolled : prev));
+    // 1. Header scroll detector via sentinel: zero scroll events, fires only at 24px threshold
+    const sentinel = document.getElementById('scroll-sentinel');
+    let scrollObserver = null;
+    if (sentinel && 'IntersectionObserver' in window) {
+      scrollObserver = new IntersectionObserver(
+        ([entry]) => {
+          setIsScrolled(!entry.isIntersecting);
+        },
+        { threshold: 0 }
+      );
+      scrollObserver.observe(sentinel);
+    } else {
+      const handleScroll = () => {
+        const scrolled = window.scrollY > 20;
+        setIsScrolled(prev => (prev !== scrolled ? scrolled : prev));
+      };
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
 
-          const sections = ['hero', 'about', 'mission', 'activities', 'contact'];
-          const scrollPos = window.scrollY + 200;
+    // 2. Section spy using IntersectionObserver (runs off-main-thread, zero offsetTop reflows)
+    const sections = ['hero', 'about', 'mission', 'activities', 'contact'];
+    const sectionElements = sections.map(id => document.getElementById(id)).filter(Boolean);
+    let sectionObserver = null;
 
-          for (let i = sections.length - 1; i >= 0; i--) {
-            const el = document.getElementById(sections[i]);
-            if (el && el.offsetTop <= scrollPos) {
-              setActiveSection(prev => (prev !== sections[i] ? sections[i] : prev));
-              break;
-            }
+    if ('IntersectionObserver' in window && sectionElements.length > 0) {
+      sectionObserver = new IntersectionObserver(
+        (entries) => {
+          const visible = entries.filter(e => e.isIntersecting);
+          if (visible.length > 0) {
+            visible.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+            setActiveSection(visible[0].target.id);
           }
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
+        },
+        {
+          rootMargin: '-20% 0px -60% 0px',
+          threshold: [0, 0.25, 0.5, 0.75]
+        }
+      );
+      sectionElements.forEach(el => sectionObserver.observe(el));
+    }
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      if (scrollObserver) scrollObserver.disconnect();
+      if (sectionObserver) sectionObserver.disconnect();
+    };
   }, []);
 
   // Active Role Tab in the Doctor & Patient Entry Hub: 'patient' | 'doctor'
@@ -352,9 +373,14 @@ export default function LandingPage({
 
   return (
     <div className="aura-bg min-h-screen text-slate-800 flex flex-col font-sans relative overflow-x-hidden selection:bg-sky-600 selection:text-white scroll-smooth">
-      {/* Arctic Frost - 2 Layer Atmospheric Gradient */}
-      <div className="aura-layer-1" aria-hidden="true" />
-      <div className="aura-layer-2" aria-hidden="true" />
+      {/* Fixed GPU-accelerated background layers (stays pinned to viewport, eliminates 4500px scroll repainting) */}
+      <div className="aura-fixed-backdrop" aria-hidden="true">
+        <div className="aura-layer-1" aria-hidden="true" />
+        <div className="aura-layer-2" aria-hidden="true" />
+      </div>
+
+      {/* Zero-reflow Sentinel for instant sticky header transition */}
+      <div id="scroll-sentinel" className="absolute top-0 left-0 w-full h-[24px] pointer-events-none -z-50" aria-hidden="true" />
 
       {/* Main Content sits above decorative layers */}
       <div className="relative z-10 flex flex-col min-h-screen w-full">
@@ -1218,7 +1244,7 @@ export default function LandingPage({
         {/* ============================================================== */}
         {/* 4. ABOUT US SECTION (#about)                                   */}
         {/* ============================================================== */}
-        <section id="about" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full">
+        <section id="about" className="section-optimized py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             <div className="lg:col-span-6 space-y-5">
@@ -1300,7 +1326,7 @@ export default function LandingPage({
         {/* ============================================================== */}
         {/* 5. OUR MISSION SECTION (#mission)                              */}
         {/* ============================================================== */}
-        <section id="mission" className="py-20 px-4 sm:px-8 bg-white/40 backdrop-blur-md border-t border-sky-900/10 relative">
+        <section id="mission" className="section-optimized py-20 px-4 sm:px-8 bg-white/40 backdrop-blur-md border-t border-sky-900/10 relative">
           <div className="max-w-6xl mx-auto w-full space-y-12">
             
             <div className="text-center max-w-3xl mx-auto space-y-3">
@@ -1365,7 +1391,7 @@ export default function LandingPage({
         {/* ============================================================== */}
         {/* 6. OUR ACTIVITIES & INITIATIVES SECTION (#activities)          */}
         {/* ============================================================== */}
-        <section id="activities" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full">
+        <section id="activities" className="section-optimized py-20 px-4 sm:px-8 max-w-7xl mx-auto w-full">
           <div className="space-y-12">
             
             <div className="text-center max-w-3xl mx-auto space-y-3">
@@ -1492,7 +1518,7 @@ export default function LandingPage({
         {/* ============================================================== */}
         {/* 7. CONTACT SECTION (#contact)                                  */}
         {/* ============================================================== */}
-        <section id="contact" className="py-20 px-4 sm:px-8 bg-white/40 backdrop-blur-md border-t border-sky-900/10 relative">
+        <section id="contact" className="section-optimized py-20 px-4 sm:px-8 bg-white/40 backdrop-blur-md border-t border-sky-900/10 relative">
           <div className="max-w-6xl mx-auto w-full space-y-12">
             
             <div className="text-center max-w-2xl mx-auto space-y-3">

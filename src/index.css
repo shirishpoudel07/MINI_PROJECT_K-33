@@ -2,7 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Arctic Frost - Aura */
+/* Smooth native scrolling and GPU layer acceleration */
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+}
+
 /* Base color on BODY - blend modes composite against this */
 body {
   background-color: #faf8f2;
@@ -10,23 +15,28 @@ body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 /* Aura Background Container */
 .aura-bg {
   position: relative;
-  overflow: hidden;
-  min-height: 100vh; /* height must be explicit - absolute layers add none */
-  /* NO background-color - layers blend against body */
+  min-height: 100vh;
 }
 
-/* Fixed Aura Background Backdrop (does not occupy flex layout space) */
+/* Fixed Aura Background Backdrop (stays pinned to viewport, eliminates 4500px scroll repainting) */
 .aura-fixed-backdrop {
   position: fixed !important;
   inset: 0 !important;
   pointer-events: none !important;
   z-index: 0 !important;
   overflow: hidden !important;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: strict;
+  will-change: transform;
 }
 
 /* Layer 1 - multiply */
@@ -42,10 +52,11 @@ body {
     rgb(100, 130, 200) 100%
   );
   mix-blend-mode: multiply;
-  filter: blur(80px); /* 115px on desktop */
-  transform: translateZ(0);
-  will-change: transform;
+  filter: blur(45px);
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
   pointer-events: none;
+  contain: strict;
 }
 
 /* Layer 2 - multiply */
@@ -61,18 +72,25 @@ body {
     rgb(100, 130, 200) 100%
   );
   mix-blend-mode: multiply;
-  filter: blur(80px); /* 115px on desktop */
-  transform: translateZ(0);
-  will-change: transform;
+  filter: blur(45px);
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
   pointer-events: none;
+  contain: strict;
 }
 
 /* Desktop Blur Enhancements (>= 768px) */
 @media (min-width: 768px) {
   .aura-layer-1,
   .aura-layer-2 {
-    filter: blur(115px);
+    filter: blur(55px);
   }
+}
+
+/* Content visibility optimization for offscreen sections to eliminate initial DOM cost */
+.section-optimized {
+  content-visibility: auto;
+  contain-intrinsic-size: 800px;
 }
 
 @layer utilities {
